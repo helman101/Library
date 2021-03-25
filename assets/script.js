@@ -8,87 +8,101 @@ const read = document.querySelector('#read');
 const form = document.querySelector('form');
 const newBookBtn = document.querySelector('#form');
 
-function Book(title, author, pages, read) {
-  this.title = title;
-  this.author = author;
-  this.pages = pages;
-  this.read = read;
-}
+const Book = (title, author, pages, read) => {
+  const changeRead = () => {
+    read = !read
+  };
 
-Book.prototype.info = function () {
-  const alreadyRead = (this.read) ? 'already read' : 'not read yet';
-  return `${this.title} by ${this.author}, ${this.pages} pages, ${alreadyRead}`;
+  const info = () => {
+    let alreadyRead = (read) ? 'already read' : 'not read yet';
+    (alreadyRead, title)
+    return `${title} by ${author}, ${pages} pages, ${alreadyRead}`;
+  };
+
+  return {title, author, pages, read, info, changeRead};
 };
 
-function saveLibrary() {
-  localStorage.lib = JSON.stringify(library);
-}
+const BookModule = (() => {
+  const removeBook = (id) => {
+    library.splice(id, 1);
+    LibraryModule.saveLibrary();
+    displayHtmlModule.showBooks(); // eslint-disable-line
+  };
 
-function removeBook() {
-  const { id } = this.parentNode;
-  library.splice(id, 1);
-  saveLibrary();
-  showBooks(); // eslint-disable-line
-}
+  const changeRead = (button) => {
+    const { id } = button.parentNode;
+    const para = button.parentNode.querySelector('p');
+    library[id].changeRead()
+    para.innerHTML = library[id].info();
+    LibraryModule.saveLibrary();
+  };
+  return {removeBook, changeRead};
+})();
 
-function changeRead() {
-  const { id } = this.parentNode;
-  const para = this.parentNode.querySelector('p');
-  library[id].read = !library[id].read;
-  para.innerHTML = library[id].info();
-  saveLibrary();
-}
+const displayHtmlModule = (() => {
+  const showBooks = () => {
+    container.innerHTML = '';
+    for (let i = 0; i < library.length; i += 1) {
+      const content = document.createElement('div');
+      content.setAttribute('id', i);
+      const text = document.createElement('p');
+      text.textContent = library[i].info();
 
-function showBooks() {
-  container.innerHTML = '';
-  for (let i = 0; i < library.length; i += 1) {
-    const content = document.createElement('div');
-    content.setAttribute('id', i);
-    const text = document.createElement('p');
-    text.textContent = library[i].info();
+      const removeBtn = document.createElement('button');
+      removeBtn.addEventListener('click', BookModule.removeBook.bind(this, i));
+      removeBtn.textContent = 'Remove';
 
-    const removeBtn = document.createElement('button');
-    removeBtn.addEventListener('click', removeBook);
-    removeBtn.textContent = 'Remove';
+      const changeReadBtn = document.createElement('button');
+      changeReadBtn.addEventListener('click', BookModule.changeRead.bind(this, changeReadBtn));
+      changeReadBtn.textContent = 'Readed?';
 
-    const changeReadBtn = document.createElement('button');
-    changeReadBtn.addEventListener('click', changeRead);
-    changeReadBtn.textContent = 'Readed?';
+      content.appendChild(text);
+      content.appendChild(changeReadBtn);
+      content.appendChild(removeBtn);
+      container.appendChild(content);
+    };
+  };
 
-    content.appendChild(text);
-    content.appendChild(changeReadBtn);
-    content.appendChild(removeBtn);
-    container.appendChild(content);
+  const showForm = () => {
+    form.classList.toggle('hidden');
+    button.classList.toggle('hidden');
+  };
+
+  return {showBooks, showForm};
+})();
+
+const LibraryModule = (() => {
+  const saveLibrary = () => {
+    localStorage.lib = JSON.stringify(library);
   }
-}
 
-function addBookToLibrary() {
-  const newBook = new Book(title.value, author.value, pages.value, read.checked);
+  const addBookToLibrary = () => {
+    const newBook = Book(title.value, author.value, pages.value, read.checked);
 
-  library.push(newBook);
+    library.push(newBook);
 
-  saveLibrary();
-  showBooks();
-}
-
-function showForm() {
-  form.classList.toggle('hidden');
-  button.classList.toggle('hidden');
-}
-
-function loadLibrary() {
-  const books = JSON.parse(localStorage.lib);
-  for (let i = 0; i < books.length; i += 1) {
-    Object.setPrototypeOf(books[i], Book.prototype);
+    saveLibrary();
+    displayHtmlModule.showBooks();
   }
-  return books;
-}
+
+  const loadLibrary = () => {
+    const books = JSON.parse(localStorage.lib);
+    for (let i = 0; i < books.length; i += 1) {
+      let prototype = Book(books[i].title, books[i].author, books[i].pages, books[i].read) 
+      Object.assign(books[i], prototype);
+    }
+    
+    return books;
+  }
+
+  return {saveLibrary, addBookToLibrary, loadLibrary}
+})();
 
 if (localStorage.lib) {
-  library = loadLibrary();
-  showBooks();
+  library = LibraryModule.loadLibrary();
+  displayHtmlModule.showBooks();
 }
 
-button.addEventListener('click', addBookToLibrary);
+button.addEventListener('click', LibraryModule.addBookToLibrary);
 
-newBookBtn.addEventListener('click', showForm);
+newBookBtn.addEventListener('click', displayHtmlModule.showForm);
