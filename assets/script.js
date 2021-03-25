@@ -8,20 +8,19 @@ const read = document.querySelector('#read');
 const form = document.querySelector('form');
 const newBookBtn = document.querySelector('#form');
 
-const Book = (title, author, pages, read) => {
-  const changeRead = () => {
-    read = !read;
-  };
+class Book {
+  constructor(title, author, pages, read) {
+    this.title = title;
+    this.author = author;
+    this.pages = pages;
+    this.read = read
+  }
 
-  const info = () => {
-    const alreadyRead = (read) ? 'already read' : 'not read yet';
-    return `${title} by ${author}, ${pages} pages, ${alreadyRead}`;
-  };
-
-  return {
-    title, author, pages, read, info, changeRead,
-  };
-};
+  info = () => {
+    const alreadyRead = (this.read) ? 'already read' : 'not read yet';
+    return `${this.title} by ${this.author}, ${this.pages} pages, ${alreadyRead}`;
+  }
+}
 
 const LibraryModule = (() => {
   const saveLibrary = () => {
@@ -29,7 +28,7 @@ const LibraryModule = (() => {
   };
 
   const addBookToLibrary = () => {
-    const newBook = Book(title.value, author.value, pages.value, read.checked);
+    const newBook = new Book(title.value, author.value, pages.value, read.checked);
 
     library.push(newBook);
 
@@ -40,8 +39,7 @@ const LibraryModule = (() => {
   const loadLibrary = () => {
     const books = JSON.parse(localStorage.lib);
     for (let i = 0; i < books.length; i += 1) {
-      const prototype = Book(books[i].title, books[i].author, books[i].pages, books[i].read);
-      Object.assign(books[i], prototype);
+      Object.setPrototypeOf(books[i], Book.prototype)
     }
 
     return books;
@@ -60,7 +58,7 @@ const BookModule = (() => {
   const changeRead = (button) => {
     const { id } = button.parentNode;
     const para = button.parentNode.querySelector('p');
-    library[id].changeRead();
+    library[id].read = !library[id].read;
     para.innerHTML = library[id].info();
     LibraryModule.saveLibrary();
   };
